@@ -445,7 +445,9 @@ efi_status_t efi_exit_boot_services(void *handle, void *priv,
 
 	status = efi_bs_call(exit_boot_services, handle, map->map_key);
 
-	if (status == EFI_INVALID_PARAMETER) {
+	size_t i = 0;
+
+	while (status == EFI_INVALID_PARAMETER) {
 		/*
 		 * The memory map changed between efi_get_memory_map() and
 		 * exit_boot_services().  Per the UEFI Spec v2.6, Section 6.4:
@@ -477,7 +479,10 @@ efi_status_t efi_exit_boot_services(void *handle, void *priv,
 			return status;
 
 		status = efi_bs_call(exit_boot_services, handle, map->map_key);
+		if (++i > 4096) break;
 	}
+
+	efi_info("exit_boot_services call attempts: %zu", i);
 
 	return status;
 }
